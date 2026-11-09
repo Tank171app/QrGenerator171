@@ -12,16 +12,21 @@ jobs:
       - name: Ambil kode
         uses: actions/checkout@v4
 
-      - name: Pasang Node.js
+      - name: Pasang Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Pasang Java 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
+
+      - name: Pasang Android SDK 36
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-36" "platform-tools"
 
       - name: Pasang dependensi
         working-directory: android-app
@@ -36,21 +41,52 @@ jobs:
         working-directory: android-app
         run: npx cap add android
 
-      - name: Sinkronkan aplikasi & ikon
+      - name: Sinkronkan aplikasi
         run: |
           cd android-app
           npx cap sync android
-          cp -r ../icons/android/mipmap-* android/app/src/main/res/
-          cp ../icons/values/ic_launcher_background.xml android/app/src/main/res/values/
-          sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <application|' android/app/src/main/AndroidManifest.xml
-          grep -q 'permission.CAMERA' android/app/src/main/AndroidManifest.xml
-          grep -q 'QR Generator 171' android/app/src/main/res/values/strings.xml
+
+      - name: Pasang ikon & izin kamera
+        run: |
+          BG=android-app/android/app/src/main/res/values/ic_launcher_background.xml
+          if [ -f icons/values/ic_launcher_background.xml ]; then
+            cp icons/values/ic_launcher_background.xml "$BG"
+          else
+            printf '<resources>\n    <color name="ic_launcher_background">#0F2028</color>\n</resources>\n' > "$BG"
+          fi
+          python3 -m venv /tmp/ikonvenv
+          /tmp/ikonvenv/bin/pip install --quiet pillow
+          /tmp/ikonvenv/bin/python - <<'PY'
+          from PIL import Image, ImageDraw
+          import os
+          src = Image.open('icons/icon.png').convert('RGBA')
+          base = 'android-app/android/app/src/main/res'
+          for name, s in [('mdpi', 48), ('hdpi', 72), ('xhdpi', 96), ('xxhdpi', 144), ('xxxhdpi', 192)]:
+              d = os.path.join(base, 'mipmap-' + name)
+              os.makedirs(d, exist_ok=True)
+              ic = src.resize((s, s), Image.LANCZOS)
+              ic.save(os.path.join(d, 'ic_launcher.png'))
+              mask = Image.new('L', (s * 4, s * 4), 0)
+              ImageDraw.Draw(mask).ellipse((0, 0, s * 4 - 1, s * 4 - 1), fill=255)
+              rnd = ic.copy()
+              rnd.putalpha(mask.resize((s, s), Image.LANCZOS))
+              rnd.save(os.path.join(d, 'ic_launcher_round.png'))
+              fs = int(s * 2.25)
+              fg = Image.new('RGBA', (fs, fs), (0, 0, 0, 0))
+              q = src.resize((int(fs * 0.62), int(fs * 0.62)), Image.LANCZOS)
+              fg.alpha_composite(q, ((fs - q.width) // 2, (fs - q.height) // 2))
+              fg.save(os.path.join(d, 'ic_launcher_foreground.png'))
+          print('ikon launcher dibuat')
+          PY
+          sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <application|' android-app/android/app/src/main/AndroidManifest.xml
+          grep -q 'permission.CAMERA' android-app/android/app/src/main/AndroidManifest.xml
+          grep -q 'QR Generator 171' android-app/android/app/src/main/res/values/strings.xml
 
       - name: Build APK
         working-directory: android-app/android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Beri nama APK
         run: mv "android-app/android/app/build/outputs/apk/debug/app-debug.apk" "QR Generator 171.apk"
