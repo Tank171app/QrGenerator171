@@ -1,0 +1,58 @@
+{
+  "name": "qr-generator-171",
+  "productName": "QR Generator 171",
+  "version": "1.0.0",
+  "description": "QR Generator 171 by Tank171 - pembuat dan pembaca QR offline",
+  "author": "Tank171",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable nsis"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "id.tank171.qrgenerator171",
+    "productName": "QR Generator 171",
+    "copyright": "by Tank171",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "app/**/*",
+      "build/icon.png"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "QR-Generator-171-portable-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "QR-Generator-171-setup-${version}.exe",
+      "shortcutName": "QR Generator 171"
+    }
+  }
+}

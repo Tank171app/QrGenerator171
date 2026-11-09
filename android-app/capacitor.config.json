@@ -1,0 +1,8 @@
+{
+  "appId": "id.tank171.qrgenerator171",
+  "appName": "QR Generator 171",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#0b0f17"
+  }
+}

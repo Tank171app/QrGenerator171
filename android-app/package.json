@@ -1,0 +1,17 @@
+{
+  "name": "qr-generator-171-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "QR Generator 171 by Tank171 - aplikasi Android",
+  "scripts": {
+    "android:add": "cap add android",
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0"
+  }
+}
