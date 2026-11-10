@@ -79,8 +79,29 @@ jobs:
           print('ikon launcher dibuat')
           PY
           sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <application|' android-app/android/app/src/main/AndroidManifest.xml
+          sed -i 's|<application|<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />\n    <application|' android-app/android/app/src/main/AndroidManifest.xml
           grep -q 'permission.CAMERA' android-app/android/app/src/main/AndroidManifest.xml
           grep -q 'QR Generator 171' android-app/android/app/src/main/res/values/strings.xml
+
+      - name: Jembatan simpan ke galeri
+        run: |
+          python3 - <<'PY'
+          import base64, glob, io, os
+
+          main = glob.glob('android-app/android/app/src/main/java/**/MainActivity.java', recursive=True)[0]
+          src = io.open(main, encoding='utf-8').read()
+          pkg = src.split('package ', 1)[1].split(';', 1)[0].strip()
+          folder = os.path.dirname(main)
+
+          java = base64.b64decode('cGFja2FnZSBfX1BLR19fOwoKaW1wb3J0IGFuZHJvaWQuY29udGVudC5Db250ZW50VmFsdWVzOwppbXBvcnQgYW5kcm9pZC5jb250ZW50LkNvbnRleHQ7CmltcG9ydCBhbmRyb2lkLm5ldC5Vcmk7CmltcG9ydCBhbmRyb2lkLm9zLkJ1aWxkOwppbXBvcnQgYW5kcm9pZC5vcy5FbnZpcm9ubWVudDsKaW1wb3J0IGFuZHJvaWQucHJvdmlkZXIuTWVkaWFTdG9yZTsKaW1wb3J0IGFuZHJvaWQudXRpbC5CYXNlNjQ7CmltcG9ydCBhbmRyb2lkLndlYmtpdC5KYXZhc2NyaXB0SW50ZXJmYWNlOwppbXBvcnQgYW5kcm9pZC53aWRnZXQuVG9hc3Q7CgppbXBvcnQgamF2YS5pby5GaWxlOwppbXBvcnQgamF2YS5pby5GaWxlT3V0cHV0U3RyZWFtOwppbXBvcnQgamF2YS5pby5PdXRwdXRTdHJlYW07CgovKiogTWVueWltcGFuIFBORyAoYmFzZTY0IGRhcmkgaGFsYW1hbikga2UgZ2FsZXJpIFBpY3R1cmVzL1FSIEdlbmVyYXRvciAxNzEuICovCnB1YmxpYyBjbGFzcyBJbWFnZVNhdmVyIHsKICAgIHByaXZhdGUgZmluYWwgQ29udGV4dCBjdHg7CgogICAgcHVibGljIEltYWdlU2F2ZXIoQ29udGV4dCBjKSB7IHRoaXMuY3R4ID0gYzsgfQoKICAgIEBKYXZhc2NyaXB0SW50ZXJmYWNlCiAgICBwdWJsaWMgdm9pZCBzYXZlKFN0cmluZyBuYW1lLCBTdHJpbmcgYmFzZTY0KSB7CiAgICAgICAgdHJ5IHsKICAgICAgICAgICAgYnl0ZVtdIGRhdGEgPSBCYXNlNjQuZGVjb2RlKGJhc2U2NCwgQmFzZTY0LkRFRkFVTFQpOwogICAgICAgICAgICBpZiAoQnVpbGQuVkVSU0lPTi5TREtfSU5UID49IEJ1aWxkLlZFUlNJT05fQ09ERVMuUSkgewogICAgICAgICAgICAgICAgQ29udGVudFZhbHVlcyB2ID0gbmV3IENvbnRlbnRWYWx1ZXMoKTsKICAgICAgICAgICAgICAgIHYucHV0KE1lZGlhU3RvcmUuSW1hZ2VzLk1lZGlhLkRJU1BMQVlfTkFNRSwgbmFtZSk7CiAgICAgICAgICAgICAgICB2LnB1dChNZWRpYVN0b3JlLkltYWdlcy5NZWRpYS5NSU1FX1RZUEUsICJpbWFnZS9wbmciKTsKICAgICAgICAgICAgICAgIHYucHV0KE1lZGlhU3RvcmUuSW1hZ2VzLk1lZGlhLlJFTEFUSVZFX1BBVEgsCiAgICAgICAgICAgICAgICAgICAgICAgIEVudmlyb25tZW50LkRJUkVDVE9SWV9QSUNUVVJFUyArICIvUVIgR2VuZXJhdG9yIDE3MSIpOwogICAgICAgICAgICAgICAgVXJpIHVyaSA9IGN0eC5nZXRDb250ZW50UmVzb2x2ZXIoKQogICAgICAgICAgICAgICAgICAgICAgICAuaW5zZXJ0KE1lZGlhU3RvcmUuSW1hZ2VzLk1lZGlhLkVYVEVSTkFMX0NPTlRFTlRfVVJJLCB2KTsKICAgICAgICAgICAgICAgIGlmICh1cmkgPT0gbnVsbCkgdGhyb3cgbmV3IElsbGVnYWxTdGF0ZUV4Y2VwdGlvbigiZ2FsZXJpIHRpZGFrIGJpc2EgZGlidWthIik7CiAgICAgICAgICAgICAgICBPdXRwdXRTdHJlYW0gb3V0ID0gY3R4LmdldENvbnRlbnRSZXNvbHZlcigpLm9wZW5PdXRwdXRTdHJlYW0odXJpKTsKICAgICAgICAgICAgICAgIG91dC53cml0ZShkYXRhKTsKICAgICAgICAgICAgICAgIG91dC5jbG9zZSgpOwogICAgICAgICAgICB9IGVsc2UgewogICAgICAgICAgICAgICAgRmlsZSBkaXIgPSBuZXcgRmlsZShFbnZpcm9ubWVudC5nZXRFeHRlcm5hbFN0b3JhZ2VQdWJsaWNEaXJlY3RvcnkoCiAgICAgICAgICAgICAgICAgICAgICAgIEVudmlyb25tZW50LkRJUkVDVE9SWV9QSUNUVVJFUyksICJRUiBHZW5lcmF0b3IgMTcxIik7CiAgICAgICAgICAgICAgICBpZiAoIWRpci5leGlzdHMoKSAmJiAhZGlyLm1rZGlycygpKSB0aHJvdyBuZXcgSWxsZWdhbFN0YXRlRXhjZXB0aW9uKCJmb2xkZXIgZ2FnYWwgZGlidWF0Iik7CiAgICAgICAgICAgICAgICBGaWxlIGYgPSBuZXcgRmlsZShkaXIsIG5hbWUpOwogICAgICAgICAgICAgICAgRmlsZU91dHB1dFN0cmVhbSBvdXQgPSBuZXcgRmlsZU91dHB1dFN0cmVhbShmKTsKICAgICAgICAgICAgICAgIG91dC53cml0ZShkYXRhKTsKICAgICAgICAgICAgICAgIG91dC5jbG9zZSgpOwogICAgICAgICAgICAgICAgYW5kcm9pZC5tZWRpYS5NZWRpYVNjYW5uZXJDb25uZWN0aW9uLnNjYW5GaWxlKGN0eCwKICAgICAgICAgICAgICAgICAgICAgICAgbmV3IFN0cmluZ1tde2YuZ2V0QWJzb2x1dGVQYXRoKCl9LCBuZXcgU3RyaW5nW117ImltYWdlL3BuZyJ9LCBudWxsKTsKICAgICAgICAgICAgfQogICAgICAgIH0gY2F0Y2ggKEV4Y2VwdGlvbiBlKSB7CiAgICAgICAgICAgIHRvYXN0KCJHYWdhbCBtZW55aW1wYW46ICIgKyBlLmdldE1lc3NhZ2UoKSk7CiAgICAgICAgfQogICAgfQoKICAgIHByaXZhdGUgdm9pZCB0b2FzdChmaW5hbCBTdHJpbmcgbXNnKSB7CiAgICAgICAgdHJ5IHsKICAgICAgICAgICAgKChhbmRyb2lkLmFwcC5BY3Rpdml0eSkgY3R4KS5ydW5PblVpVGhyZWFkKG5ldyBSdW5uYWJsZSgpIHsKICAgICAgICAgICAgICAgIEBPdmVycmlkZSBwdWJsaWMgdm9pZCBydW4oKSB7CiAgICAgICAgICAgICAgICAgICAgVG9hc3QubWFrZVRleHQoY3R4LCBtc2csIFRvYXN0LkxFTkdUSF9TSE9SVCkuc2hvdygpOwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9KTsKICAgICAgICB9IGNhdGNoIChFeGNlcHRpb24gaWdub3JlZCkgeyB9CiAgICB9Cn0K').decode('utf-8').replace('__PKG__', pkg)
+          io.open(os.path.join(folder, 'ImageSaver.java'), 'w', encoding='utf-8').write(java)
+
+          hook = base64.b64decode('CiAgICBAT3ZlcnJpZGUKICAgIHByb3RlY3RlZCB2b2lkIG9uU3RhcnQoKSB7CiAgICAgICAgc3VwZXIub25TdGFydCgpOwogICAgICAgIHRyeSB7CiAgICAgICAgICAgIGlmIChnZXRCcmlkZ2UoKSAhPSBudWxsICYmIGdldEJyaWRnZSgpLmdldFdlYlZpZXcoKSAhPSBudWxsKSB7CiAgICAgICAgICAgICAgICBnZXRCcmlkZ2UoKS5nZXRXZWJWaWV3KCkuYWRkSmF2YXNjcmlwdEludGVyZmFjZShuZXcgSW1hZ2VTYXZlcih0aGlzKSwgIkFuZHJvaWRTYXZlciIpOwogICAgICAgICAgICB9CiAgICAgICAgfSBjYXRjaCAoRXhjZXB0aW9uIGlnbm9yZWQpIHsgfQogICAgfQo=').decode('utf-8')
+          if 'AndroidSaver' not in src:
+              end = src.rstrip().rfind('}')
+              io.open(main, 'w', encoding='utf-8').write(src[:end] + hook + src[end:])
+          print('jembatan galeri siap di', main)
+          PY
 
       - name: Build APK
         working-directory: android-app/android
