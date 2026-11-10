@@ -3087,6 +3087,7 @@ var qrcode = function() {
       'copy.ok': 'Gambar QR disalin ke clipboard.',
       'copy.unsupported': 'Browser ini tidak mendukung salin gambar \u2014 pakai tombol Unduh PNG.',
       'copy.fail': 'Gagal menyalin \u2014 pakai tombol Unduh PNG.',
+      'save.blocked': 'Browser di dalam aplikasi (misalnya WhatsApp atau Instagram) memblokir penyimpanan gambar. Buka halaman ini di Chrome, lalu tekan tombol ini lagi.',
       'read.label': 'Ambil gambar QR',
       'read.camera': 'Scan pakai kamera',
       'read.stop': 'Hentikan kamera',
@@ -3144,6 +3145,7 @@ var qrcode = function() {
       'copy.ok': 'QR image copied to the clipboard.',
       'copy.unsupported': "This browser can't copy images \u2014 use Download PNG instead.",
       'copy.fail': "Couldn't copy \u2014 use Download PNG instead.",
+      'save.blocked': 'This in-app browser blocks image saving. Open this page in Chrome, then tap the button again.',
       'read.label': 'Get a QR image',
       'read.camera': 'Scan with camera',
       'read.stop': 'Stop camera',
@@ -3327,9 +3329,12 @@ var qrcode = function() {
       return;
     }
 
-    current = { qr: qr, count: qr.getModuleCount(), text: text, level: level };
+    current = { qr: qr, count: qr.getModuleCount(), text: text, level: level, blob: null };
 
     draw(canvas, qr, px, fg, bg);
+    canvas.toBlob(function (blob) {
+      if (current && current.qr === qr) current.blob = blob;
+    }, 'image/png');
     canvas.classList.remove('hidden');
     emptyEl.style.display = 'none';
     var version = (current.count - 17) / 4;
@@ -3358,19 +3363,43 @@ var qrcode = function() {
     return 'qr-' + (base || 'code') + '.' + ext;
   }
 
+  function embeddedBrowser() {
+    var ua = navigator.userAgent || '';
+    return /; wv\)/.test(ua) || /(FBAN|FBAV|FB_IAB|Instagram|Line\/|WhatsApp|MicroMessenger)/i.test(ua);
+  }
+
   function saveBlob(blob, name) {
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    if ('download' in document.createElement('a') && !embeddedBrowser()) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      return;
+    }
+
+    if (navigator.canShare && window.File) {
+      var file = new File([blob], name, { type: blob.type || 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file] }).catch(function () {
+          setHint(t('save.blocked'), true);
+        });
+        return;
+      }
+    }
+
+    setHint(t('save.blocked'), true);
   }
 
   function downloadPng() {
     if (!current) return;
+    if (current.blob) {
+      saveBlob(current.blob, fileName('png'));
+      return;
+    }
     canvas.toBlob(function (blob) {
       if (blob) saveBlob(blob, fileName('png'));
     }, 'image/png');
